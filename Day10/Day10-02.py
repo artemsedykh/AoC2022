@@ -1,7 +1,8 @@
-CRT = [['.' for i in range(40)] for j in range(7)]
+CRT = [['.' for i in range(40)] for j in range(6)]
 
 def draw_pixel(cycle, X):
-    return '#' if cycle % 40 in (X-1, X, X+1) else '.'
+    if cycle < 240 and cycle % 40 in (X-1, X, X+1):
+        CRT[cycle // 40][cycle % 40] = '#'
 
 
 with open('day10.txt', 'r') as file:
@@ -11,15 +12,15 @@ with open('day10.txt', 'r') as file:
     while line:
         if line[:4] == 'noop':
             cycle += 1
-            CRT[cycle // 40][cycle % 40] = draw_pixel(cycle, X)
+            draw_pixel(cycle, X)
         else:
             num = int(line.split()[1])
             cycle += 1
-            CRT[cycle // 40][cycle % 40] = draw_pixel(cycle, X)
+            draw_pixel(cycle, X)
             cycle += 1
             X += num
-            CRT[cycle // 40][cycle % 40] = draw_pixel(cycle, X)
+            draw_pixel(cycle, X)
         line = file.readline().strip()
 
-for row in CRT[:6]:
+for row in CRT:
     print("".join(row))
