@@ -46,9 +46,10 @@ def add_pressure(nzvo):
         acc += valves[v]['flow']
     return acc
 
+
 def opt_press_m(mdir, edir, mmov, emov, time, press, nzvo, nzvc):
     if mmov > 0:
-        return opt_press_e(mdir, edir, mmov-1, emov, time, press, nzvo, nzvc)
+        return opt_press_e(mdir, edir, mmov - 1, emov, time, press, nzvo, nzvc)
     else:
         nzvo_edit = nzvo.copy()
         if mdir != 'AA':
@@ -58,18 +59,19 @@ def opt_press_m(mdir, edir, mmov, emov, time, press, nzvo, nzvc):
             for v in nzvc:
                 nzvc_edit = nzvc.copy()
                 nzvc_edit.remove(v)
-                max_val = max(max_val, opt_press_e(v, edir, len(min_tracks[mdir][v])-1, emov,
+                max_val = max(max_val, opt_press_e(v, edir, len(min_tracks[mdir][v]) - 1, emov,
                                                    time, press, nzvo_edit, nzvc_edit))
             return max_val
         else:
-            return opt_press_e(mdir, edir, mmov-1, emov, time, press, nzvo_edit, nzvc)
+            return opt_press_e(mdir, edir, mmov - 1, emov, time, press, nzvo_edit, nzvc)
+
 
 def opt_press_e(mdir, edir, mmov, emov, time, press, nzvo, nzvc):
     # print(mdir, edir, str(mmov).rjust(3), str(emov).rjust(3), str(26-time).rjust(2), str(press).rjust(4), nzvo, nzvc)
     if time > 0:
         if emov > 0:
             if mmov > 0:
-                delta = min(emov, mmov)
+                delta = min(emov, mmov, time)
                 return opt_press_m(mdir, edir, mmov - delta + 1, emov - delta, time - delta,
                                    press + add_pressure(nzvo) * delta, nzvo, nzvc)
             else:
@@ -83,7 +85,7 @@ def opt_press_e(mdir, edir, mmov, emov, time, press, nzvo, nzvc):
                 for v in nzvc:
                     nzvc_edit = nzvc.copy()
                     nzvc_edit.remove(v)
-                    max_val = max(max_val, opt_press_m(mdir, v, mmov, len(min_tracks[edir][v])-1,
+                    max_val = max(max_val, opt_press_m(mdir, v, mmov, len(min_tracks[edir][v]) - 1,
                                                        time - 1, press + add_pressure(nzvo_edit), nzvo_edit, nzvc_edit))
                 return max_val
             else:
@@ -95,5 +97,6 @@ def opt_press_e(mdir, edir, mmov, emov, time, press, nzvo, nzvc):
                                        press + add_pressure(nzvo_edit) * time, nzvo_edit, nzvc)
     else:
         return press
+
 
 print(opt_press_m('AA', 'AA', 0, 0, 26, 0, nz_valves_open, nz_valves_close))
