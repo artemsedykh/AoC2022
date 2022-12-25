@@ -33,42 +33,38 @@ for _ in valves.keys():
                     min_tracks[n][m] = res
                     min_tracks[m][n] = res[::-1]
 
-nz_valves_open = set()
 nz_valves_close = set()
 for v in valves.keys():
     if valves[v]['flow'] > 0:
         nz_valves_close.add(v)
 
 
-def add_pressure():
+def add_pressure(nzvo):
     acc = 0
-    for v in nz_valves_open:
+    for v in nzvo:
         acc += valves[v]['flow']
     return acc
 
 
-def opt_press(pos, time, total_pressure):
+def opt_press(pos, time, total_pressure, nzvo, nzvc):
     if time > 0:
+        nzvo_edit = set(nzvo)
         if pos != 'AA':
-            nz_valves_open.add(pos)
-            nz_valves_close.remove(pos)
-        max_val = 0
-        if nz_valves_close:
-            for v in nz_valves_close:
+            nzvo_edit.add(pos)
+        if nzvc:
+            max_val = 0
+            for v in nzvc:
+                nzvc_edit = set(nzvc)
+                nzvc_edit.remove(v)
                 av_moves = min(len(min_tracks[pos][v]), time)
-                max_val = max(max_val, opt_press(v, time - av_moves, total_pressure + add_pressure() * av_moves))
-            if pos != 'AA':
-                nz_valves_open.remove(pos)
-                nz_valves_close.add(pos)
+                max_val = max(max_val, opt_press(v, time - av_moves, total_pressure + add_pressure(nzvo_edit) * av_moves,
+                                                 nzvo_edit, nzvc_edit))
             return max_val
         else:
-            total_pressure += add_pressure() * time
-            if pos != 'AA':
-                nz_valves_open.remove(pos)
-                nz_valves_close.add(pos)
+            total_pressure += add_pressure(nzvo_edit) * time
             return total_pressure
     else:
         return total_pressure
 
 
-print(opt_press('AA', 30, 0))
+print(opt_press('AA', 30, 0, set(), nz_valves_close))
