@@ -1,43 +1,105 @@
-robots = {'ore': 1, 'clay': 0, 'obsidian': 0, 'geode': 0}
-resources = {'ore': 0, 'clay': 0, 'obsidian': 0, 'geode': 0}
-costs = {'ore': 4, 'clay': 2, 'obsidian': (3, 14), 'geode': (2, 7)}
+ore_rob, cla_rob, obs_rob, geo_rob = 1, 0, 0, 0
+ore_res, cla_res, obs_res, geo_res = 0, 0, 0, 0
+ore_ore_cst, cla_ore_cst, obs_ore_cst, obs_cla_cst, geo_ore_cst, geo_obs_cst = 4, 2, 3, 14, 2, 7
 
 
-def mining(robots, resources, time):
+def mining(ore_rob, cla_rob, obs_rob, geo_rob, ore_res, cla_res, obs_res, geo_res, ore_ore_cst,
+           cla_ore_cst, obs_ore_cst, obs_cla_cst, geo_ore_cst, geo_obs_cst, time):
     if time == 0:
-        return resources['geode']
+        return geo_res
+    elif time == 1:
+        return geo_res + geo_rob
     else:
         no_out, ore_out, cla_out, obs_out, geo_out = 0, 0, 0, 0, 0
-        if resources['ore'] - costs['geode'][0] >= 0 and resources['obsidian'] - costs['geode'][1] >= 0:
-            geode_robots = robots.copy()
-            geode_resources = {key: robots[key] + resources[key] for key in robots}
-            geode_robots['geode'] += 1
-            geode_resources['ore'] -= costs['geode'][0]
-            geode_resources['obsidian'] -= costs['geode'][1]
-            geo_out = mining(geode_robots, geode_resources, time - 1)
-        if resources['ore'] - costs['obsidian'][0] >= 0 and resources['clay'] - costs['obsidian'][1] >= 0:
-            obsidian_robots = robots.copy()
-            obsidian_resources = {key: robots[key] + resources[key] for key in robots}
-            obsidian_robots['obsidian'] += 1
-            obsidian_resources['ore'] -= costs['obsidian'][0]
-            obsidian_resources['clay'] -= costs['obsidian'][1]
-            obs_out = mining(obsidian_robots, obsidian_resources, time - 1)
-        if resources['ore'] - costs['clay'] >= 0:
-            clay_robots = robots.copy()
-            clay_resources = {key: robots[key] + resources[key] for key in robots}
-            clay_robots['clay'] += 1
-            clay_resources['ore'] -= costs['clay']
-            cla_out = mining(clay_robots, clay_resources, time - 1)
-        if resources['ore'] - costs['ore'] >= 0:
-            ore_robots = robots.copy()
-            ore_resources = {key: robots[key] + resources[key] for key in robots}
-            ore_robots['ore'] += 1
-            ore_resources['ore'] -= costs['ore']
-            ore_out = mining(ore_robots, ore_resources, time - 1)
-        no_robots = robots.copy()
-        no_resources = {key: robots[key] + resources[key] for key in robots}
-        no_out = mining(no_robots, no_resources, time - 1)
+        # decision: make ore_rob
+        if ore_rob < max(ore_ore_cst, cla_ore_cst, obs_ore_cst, geo_ore_cst):
+            temp_ore_res, temp_cla_res, temp_obs_res, temp_geo_res, t = ore_res, cla_res, obs_res, geo_res, 0
+            while temp_ore_res < ore_ore_cst:
+                temp_ore_res += ore_rob
+                temp_cla_res += cla_rob
+                temp_obs_res += obs_rob
+                temp_geo_res += geo_rob
+                t += 1
+            if t < time:
+                temp_ore_res += (ore_rob - ore_ore_cst)
+                temp_cla_res += cla_rob
+                temp_obs_res += obs_rob
+                temp_geo_res += geo_rob
+                ore_out = mining(ore_rob + 1, cla_rob, obs_rob, geo_rob, temp_ore_res, temp_cla_res, temp_obs_res,
+                                 temp_geo_res, ore_ore_cst, cla_ore_cst, obs_ore_cst, obs_cla_cst, geo_ore_cst,
+                                 geo_obs_cst, time - t - 1)
+        # decision: make cla_rob
+        temp_ore_res, temp_cla_res, temp_obs_res, temp_geo_res, t = ore_res, cla_res, obs_res, geo_res, 0
+        while temp_ore_res < cla_ore_cst:
+            temp_ore_res += ore_rob
+            temp_cla_res += cla_rob
+            temp_obs_res += obs_rob
+            temp_geo_res += geo_rob
+            t += 1
+        if t < time:
+            temp_ore_res += (ore_rob - cla_ore_cst)
+            temp_cla_res += cla_rob
+            temp_obs_res += obs_rob
+            temp_geo_res += geo_rob
+            cla_out = mining(ore_rob, cla_rob + 1, obs_rob, geo_rob, temp_ore_res, temp_cla_res, temp_obs_res,
+                             temp_geo_res, ore_ore_cst, cla_ore_cst, obs_ore_cst, obs_cla_cst, geo_ore_cst,
+                             geo_obs_cst, time - t - 1)
+        # decision: make obs_rob
+        if cla_rob > 0:
+            temp_ore_res, temp_cla_res, temp_obs_res, temp_geo_res, t = ore_res, cla_res, obs_res, geo_res, 0
+            while temp_ore_res < obs_ore_cst or temp_cla_res < obs_cla_cst:
+                temp_ore_res += ore_rob
+                temp_cla_res += cla_rob
+                temp_obs_res += obs_rob
+                temp_geo_res += geo_rob
+                t += 1
+            if t < time:
+                temp_ore_res += (ore_rob - obs_ore_cst)
+                temp_cla_res += (cla_rob - obs_cla_cst)
+                temp_obs_res += obs_rob
+                temp_geo_res += geo_rob
+                obs_out = mining(ore_rob, cla_rob, obs_rob + 1, geo_rob, temp_ore_res, temp_cla_res, temp_obs_res,
+                                 temp_geo_res, ore_ore_cst, cla_ore_cst, obs_ore_cst, obs_cla_cst, geo_ore_cst,
+                                 geo_obs_cst, time - t - 1)
+        # decision: make geo_rob
+        if obs_rob > 0:
+            temp_ore_res, temp_cla_res, temp_obs_res, temp_geo_res, t = ore_res, cla_res, obs_res, geo_res, 0
+            while temp_ore_res < geo_ore_cst or temp_obs_res < geo_obs_cst:
+                temp_ore_res += ore_rob
+                temp_cla_res += cla_rob
+                temp_obs_res += obs_rob
+                temp_geo_res += geo_rob
+                t += 1
+            if t < time:
+                temp_ore_res += (ore_rob - geo_ore_cst)
+                temp_cla_res += cla_rob
+                temp_obs_res += (obs_rob - geo_obs_cst)
+                temp_geo_res += geo_rob
+                geo_out = mining(ore_rob, cla_rob, obs_rob, geo_rob + 1, temp_ore_res, temp_cla_res, temp_obs_res,
+                                 temp_geo_res, ore_ore_cst, cla_ore_cst, obs_ore_cst, obs_cla_cst, geo_ore_cst,
+                                 geo_obs_cst, time - t - 1)
+        if ore_out == cla_out == obs_out == geo_out == 0:
+            temp_ore_res, temp_cla_res, temp_obs_res, temp_geo_res, t = ore_res, cla_res, obs_res, geo_res, 0
+            while t < time:
+                temp_ore_res += ore_rob
+                temp_cla_res += cla_rob
+                temp_obs_res += obs_rob
+                temp_geo_res += geo_rob
+                t += 1
+            no_out = temp_geo_res
         return max(no_out, ore_out, cla_out, obs_out, geo_out)
 
 
-print(mining(robots, resources, 20))
+with open('day19.txt', 'r') as file:
+    line = file.readline()
+    i = 1
+    acc = 0
+    while line:
+        ore_ore_cst, cla_ore_cst, obs_ore_cst, obs_cla_cst, geo_ore_cst, geo_obs_cst = [int(s) for s in line.split() if
+                                                                                        s.strip().isdigit()]
+        acc += i * mining(ore_rob, cla_rob, obs_rob, geo_rob, ore_res, cla_res, obs_res, geo_res,
+                        ore_ore_cst, cla_ore_cst, obs_ore_cst, obs_cla_cst, geo_ore_cst, geo_obs_cst, 24)
+        line = file.readline()
+        i += 1
+
+print(acc)
